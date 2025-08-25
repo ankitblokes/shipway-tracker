@@ -2,17 +2,23 @@
 import Cors from "cors"
 import initMiddleware from "../../lib/init-middleware"
 
-// ✅ CORS init
+// ✅ Initialize CORS middleware
 const cors = initMiddleware(
   Cors({
     methods: ["POST", "OPTIONS"],
-    origin: "*", // testing ke liye *, baad me domain restrict kar dena
+    origin: "https://supersox.com", // change this to your Shopify store domain
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 )
 
 export default async function handler(req, res) {
   // Run CORS
   await cors(req, res)
+
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
+  }
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" })
@@ -25,14 +31,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ status: "Error", message: "AWB required" })
     }
 
-    // 🚀 Shipway API call
+    // 🚀 Call Shipway API
     const resp = await fetch("https://shipway.in/api/track", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Basic ${Buffer.from(
           `${process.env.SHIPWAY_EMAIL}:${process.env.SHIPWAY_API_KEY}`
-        ).toString("base64")}`, // Shipway Basic Auth
+        ).toString("base64")}`,
       },
       body: JSON.stringify({ awb }),
     })
