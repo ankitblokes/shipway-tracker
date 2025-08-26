@@ -1,4 +1,4 @@
-// pages/api/track.js
+// /pages/api/track.js
 import Cors from "cors"
 import initMiddleware from "../../lib/init-middleware"
 
@@ -6,7 +6,11 @@ import initMiddleware from "../../lib/init-middleware"
 const cors = initMiddleware(
   Cors({
     methods: ["POST", "OPTIONS"],
-    origin: "https://supersox.com", // change this to your Shopify store domain
+    origin: [
+      "https://supersox.com",
+      "https://www.supersox.com",
+      "http://localhost:3000" // ✅ optional: for local dev testing
+    ],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 )
@@ -15,11 +19,12 @@ export default async function handler(req, res) {
   // Run CORS
   await cors(req, res)
 
-  // Handle preflight
+  // Handle preflight request
   if (req.method === "OPTIONS") {
     return res.status(200).end()
   }
 
+  // Allow only POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" })
   }
@@ -43,10 +48,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({ awb }),
     })
 
+    // Parse Shipway response
     const data = await resp.json()
 
     return res.status(200).json({ status: "Success", response: data })
   } catch (err) {
+    console.error("❌ Shipway API error:", err)
     return res.status(500).json({ status: "Error", message: err.message })
   }
 }
