@@ -14,8 +14,8 @@ app.post("/track", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: "YOUR_SHIPWAY_EMAIL",   // yaha apna Shipway email
-        password: "YOUR_SHIPWAY_API_KEY", // yaha apna API key
+        username: "team@supersox.com",   // yaha apna Shipway email
+        password: "7A149TU34s8N69g07eO1gB1q33s3ci0a", // yaha apna API key
         waybill: waybill                  // frontend se aayega
       })
     });
