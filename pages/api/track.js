@@ -1,59 +1,32 @@
-// /pages/api/track.js
-import Cors from "cors"
-import initMiddleware from "../../lib/init-middleware"
+// track.js
+import express from "express";
+import fetch from "node-fetch";
 
-// ✅ Initialize CORS middleware
-const cors = initMiddleware(
-  Cors({
-    methods: ["POST", "OPTIONS"],
-    origin: [
-      "https://supersox.com",
-      "https://www.supersox.com",
-      "http://localhost:3000" // ✅ optional: for local dev testing
-    ],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-)
+const app = express();
+app.use(express.json());
 
-export default async function handler(req, res) {
-  // Run CORS
-  await cors(req, res)
-
-  // Handle preflight request
-  if (req.method === "OPTIONS") {
-    return res.status(200).end()
-  }
-
-  // Allow only POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
+// API endpoint for tracking
+app.post("/track", async (req, res) => {
+  const { waybill } = req.body;
 
   try {
-    const { awb } = req.body
-
-    if (!awb) {
-      return res.status(400).json({ status: "Error", message: "AWB required" })
-    }
-
-    // 🚀 Call Shipway API
-    const resp = await fetch("https://shipway.in/api/track", {
+    const response = await fetch("https://shipway.in/api/getShipmentDetails", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${Buffer.from(
-          `${process.env.SHIPWAY_EMAIL}:${process.env.SHIPWAY_API_KEY}`
-        ).toString("base64")}`,
-      },
-      body: JSON.stringify({ awb }),
-    })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "YOUR_SHIPWAY_EMAIL",   // yaha apna Shipway email
+        password: "YOUR_SHIPWAY_API_KEY", // yaha apna API key
+        waybill: waybill                  // frontend se aayega
+      })
+    });
 
-    // Parse Shipway response
-    const data = await resp.json()
-
-    return res.status(200).json({ status: "Success", response: data })
-  } catch (err) {
-    console.error("❌ Shipway API error:", err)
-    return res.status(500).json({ status: "Error", message: err.message })
+    const data = await response.json();
+    res.json(data); // frontend/chatbot ko bhej do
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong" });
   }
-}
+});
+
+// run server
+app.listen(3000, () => console.log("✅ Tracker running on http://localhost:3000"));
